@@ -1,0 +1,208 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <title>Translating Global jQuery Event Coordinates</title>
+    <style type="text/css">
+        #target-local,
+        #target-global {
+            background-color: #FAFAFA;
+            border: 20px solid #CCCCCC;
+            cursor: pointer;
+            float: left;
+            height: 200px;
+            margin-right: 20px;
+            padding: 10px 10px 10px 10px;
+            position: relative;
+            width: 200px;
+        }
+
+        #local {
+            background-color: gold;
+            border: 1px solid #666666;
+            display: none;
+            padding: 5px 5px 5px 5px;
+            position: absolute;
+            white-space: nowrap;
+            z-index: 100;
+        }
+
+        #global {
+            background-color: #CC0000;
+            border: 1px solid #666666;
+            color: #FFFFFF;
+            display: none;
+            padding: 5px 5px 5px 5px;
+            position: absolute;
+            white-space: nowrap;
+            z-index: 100;
+        }
+    </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"
+        integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script type="text/javascript">
+        // I translate the coordiantes from a global context to
+        // a local context.
+        $.globalToLocal = function (context, globalX, globalY) {
+            // Get the position of the context element.
+            var position = context.offset();
+
+            // Return the X/Y in the local context.
+            return ({
+                x: Math.floor(globalX - position.left),
+                y: Math.floor(globalY - position.top)
+            });
+        };
+
+
+        // I translate the coordinates from a local context to
+        // a global context.
+        jQuery.localToGlobal = function (context, localX, localY) {
+            // Get the position of the context element.
+            var position = context.offset();
+
+            // Return the X/Y in the local context.
+            return ({
+                x: Math.floor(localX + position.left),
+                y: Math.floor(localY + position.top)
+            });
+        };
+
+
+        // -------------------------------------------------- //
+        // -------------------------------------------------- //
+
+
+        // I am the FN version of the global to local function.
+        $.fn.globalToLocal = function (globalX, globalY) {
+            return (
+                $.globalToLocal(
+                    this.first(),
+                    globalX,
+                    globalY
+                )
+            );
+        };
+
+
+        // I am the FN version of the local to global function.
+        $.fn.localToGlobal = function (localX, localY) {
+            return (
+                $.localToGlobal(
+                    this.first(),
+                    localX,
+                    localY
+                )
+            );
+        };
+
+
+        // -------------------------------------------------- //
+        // -------------------------------------------------- //
+
+
+        // When the DOM is ready, initialize the scripts.
+        jQuery(function ($) {
+
+            // Get the target divs.
+            var targetLocal = $("#target-local");
+            var targetGlobal = $("#target-global");
+            var local = $("#local");
+            var global = $("#global");
+
+            // Put the local div inside the target so that its
+            // position will be relative to the target div.
+            targetLocal.append(local);
+
+
+            // Bind to the click event on the target element so
+            // we can trap it and position the elements.
+            targetLocal.click(
+                function (event) {
+
+                    // Get the local coordinates trasnlated from
+                    // the "global" event coordinates.
+                    var localCoordinates = targetLocal.globalToLocal(
+                        event.pageX,
+                        event.pageY
+                    );
+
+                    // Set the text of the local element. When
+                    // setting the actual position, adjust for
+                    // the border of the container.
+                    local
+                        .text(
+                            localCoordinates.x +
+                            " / " +
+                            localCoordinates.y
+                        )
+                        .css({
+                            left: (localCoordinates.x - 20 + "px"),
+                            top: (localCoordinates.y - 20 + "px")
+                        })
+                        .show();
+
+
+                    // -------------------------------------- //
+                    // -------------------------------------- //
+
+
+                    // Using the local elements, let's set the
+                    // position of the global div relative to the
+                    // other target element.
+                    var globalCoordinates = targetGlobal.localToGlobal(
+                        localCoordinates.x,
+                        localCoordinates.y
+                    );
+
+                    // Set the text and position the element.
+                    //
+                    // NOTE: When going from local to global, we
+                    // don't need to take into account the local
+                    // border when positioning the element since
+                    // the element is NOT INSIDE the target
+                    // container / context.
+                    global
+                        .text(
+                            globalCoordinates.x +
+                            " / " +
+                            globalCoordinates.y
+                        )
+                        .css({
+                            left: (globalCoordinates.x + "px"),
+                            top: (globalCoordinates.y + "px")
+                        })
+                        .show();
+                }
+            );
+
+        });
+    </script>
+</head>
+
+<body>
+
+    <h1>
+        Translating Global jQuery Event Coordinates
+    </h1>
+
+    <div id="target-local">
+        Local Target
+    </div>
+
+    <div id="target-global">
+        Global Target
+    </div>
+
+
+    <div id="local">
+        <!-- This will be populated later. -->
+    </div>
+
+    <div id="global">
+        <!-- This will be populated later. -->
+    </div>
+
+</body>
+
+</html>
